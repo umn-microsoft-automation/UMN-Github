@@ -22,96 +22,45 @@
 #
 ###########################
 
-
-function Get-BasicAuthCredentials {
+function Get-GitHubRepoRefs {
 	<#
 		.SYNOPSIS
-			Get a string representing basic authentication credentials for use with REST api calls
+		    Get list of Repo Refs
 
 		.DESCRIPTION
-			Takes in a username and a password then returns a base64 string which can be used as a basic credential for REST apis
+		    Takes in a username, password,  repository, organization and a file to output to then downloads the file.
 
-		.PARAMETER Username
-			String for the username
-
-		.PARAMETER Password
-			String for the password
-
-		.NOTES
-			Name: Get-BasicAuthCredentials
-			Author: Jeff Bolduan
-			LASTEDIT: 3/11/2016
-
-		.EXAMPLE
-			Get-BasicAuthCredentials -Username "Test" -Password "Test"
-		
-			This will return a string: VGVzdDpUZXN0
-	#>
-	[CmdletBinding()]
-	param(
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Username,
-
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Password
-	)
-
-	$AuthString = "$($Username):$($Password)"
-	$AuthBytes = [System.Text.Encoding]::ASCII.GetBytes($AuthString)
-
-	return [System.Convert]::ToBase64String($AuthBytes)
-}
-
-
-function Get-GitHubRepoRefs {
-		<#
-		.SYNOPSIS
-		Get list of Repo Refs
-
-		.DESCRIPTION
-		Takes in a username, password,  repository, organization and a file to output to then downloads the file.
-
-		.PARAMETER Username
-		Username string to connect to on premise GitHub instance.
-
-		.PARAMETER Password
-		Password string to connect to on premise GitHub instance.
+		.PARAMETER psCreds
+		    PScredential composed of your username/password to Git Server
 
 		.PARAMETER authToken
-		Use instead of user/pass, personal auth token
+		    Use instead of user/pass, personal auth token
 
 		.PARAMETER File
-		Filename string which needs to be downloaded from the repository.
+		    Filename string which needs to be downloaded from the repository.
 
 		.PARAMETER Repo
-		Repository name string which is used to identify which repository under the organization to go into.
+		    Repository name string which is used to identify which repository under the organization to go into.
 
 		.PARAMETER Org
-		Organization name string which is used to identify which organization in the GitHub instance to go into.
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
 
 
 		.NOTES
-		Name: Get-GitHubRepoRefs
-		Author: Travis Sobeck
-		LASTEDIT: 4/26/2017
+		    Name: Get-GitHubRepoRefs
+		    Author: Travis Sobeck
+		    LASTEDIT: 4/26/2017
 
 		.EXAMPLE
-		Get-GitHubRepoRefs -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer"
+		    Get-GitHubRepoRefs -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer"
 
-		This command will connect to the UMN GitHub instance and download the psscript1 file from the MyFakeRepo repository
-		which is under the MyFakeOrg organization.  It will create the file at C:\Temp called psscript.ps1.
 	#>
 	[CmdletBinding()]
 	param(
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
+		
+        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$Username,
-
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Password,
+		[System.Management.Automation.PSCredential]$psCreds,
 
 		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
 		[ValidateNotNullOrEmpty()]
@@ -131,8 +80,8 @@ function Get-GitHubRepoRefs {
 
 	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
 	else{
-		$Credential = Get-BasicAuthCredentials -Username $Username -Password $Password	
-		$Headers = @{"Authorization" = "Basic $Credential"}
+		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
+		$Headers = @{"Authorization" = "Basic $auth"}
 	}
     if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
@@ -142,55 +91,47 @@ function Get-GitHubRepoRefs {
 
 
 function Get-GitHubRepoFile {
-		<#
+	<#
 		.SYNOPSIS
-		Get a file from a GitHub Repo.
+		    Get a file from a GitHub Repo.
 
 		.DESCRIPTION
-		Takes in a username, password, filename, repository, organization and a file to output to then downloads the file
-		from the repository.
+		    Takes in a username, password, filename, repository, organization and a file to output to then downloads the file
+		    from the repository.
 
-		.PARAMETER Username
-		Username string to connect to the UMN GitHub instance.
-
-		.PARAMETER Password
-		Password string to connect to the UMN GitHub instance.
+		.PARAMETER psCreds
+		    PScredential composed of your username/password to Git Server
 
 		.PARAMETER authToken
-		Use instead of user/pass, personal auth token
+		    Use instead of user/pass, personal auth token
 
 		.PARAMETER File
-		Filename string which needs to be downloaded from the repository.
+		    Filename string which needs to be downloaded from the repository.
 
 		.PARAMETER Repo
-		Repository name string which is used to identify which repository under the organization to go into.
+		    Repository name string which is used to identify which repository under the organization to go into.
 
 		.PARAMETER Org
-		Organization name string which is used to identify which organization in the GitHub instance to go into.
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
 
 		.PARAMETER OutFile
-		A string representing the local file path to download the GitHub file to.
+		    A string representing the local file path to download the GitHub file to.
 
 		.NOTES
-		Name: Get-GitHubRepoFile
-		Author: Jeff Bolduan
-		LASTEDIT:  4/26/2017
+		    Name: Get-GitHubRepoFile
+		    Author: Jeff Bolduan
+		    LASTEDIT:  4/26/2017
 
 		.EXAMPLE
-		Get-GitHubRepoFile -Username "Test" -Password "pass" -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -OutFile "C:\temp\psscript.ps1" -server "ServerFQDN"
+		    Get-GitHubRepoFile -Username "Test" -Password "pass" -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -OutFile "C:\temp\psscript.ps1" -server "ServerFQDN"
 
-		This command will connect to the UMN GitHub instance and download the psscript1 file from the MyFakeRepo repository
-		which is under the MyFakeOrg organization.  It will create the file at C:\Temp called psscript.ps1.
 	#>
 	[CmdletBinding()]
 	param(
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
+		
+        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$Username,
-
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Password,
+		[System.Management.Automation.PSCredential]$psCreds,
 
 		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
 		[ValidateNotNullOrEmpty()]
@@ -218,8 +159,8 @@ function Get-GitHubRepoFile {
 
 	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
 	else{
-		$Credential = Get-BasicAuthCredentials -Username $Username -Password $Password	
-		$Headers = @{"Authorization" = "Basic $Credential"}
+		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
+		$Headers = @{"Authorization" = "Basic $auth"}
 	}
 	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
@@ -228,7 +169,7 @@ function Get-GitHubRepoFile {
 	if($RESTRequest.download_url -eq $null) {
 		throw [System.IO.IOException]
 	} else {
-		$WebRequest = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $Headers -OutFile $OutFile
+		$null = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $Headers -OutFile $OutFile
 	}
 }
 
@@ -236,44 +177,38 @@ function Get-GitHubRepoFile {
 function Get-GitHubRepoUnZipped {
 <#
 	.SYNOPSIS
-	Get a GitHub Repo.
+	    Get a GitHub Repo.
 
 	.DESCRIPTION
-	Takes in a username, password, repository, organization and a folder to output to then downloads the files
-	from the repository.
+	    Takes in a username, password, repository, organization and a folder to output to then downloads the files
+	    from the repository.
 
-	.PARAMETER Username
-	Username string to connect to the UMN GitHub instance.
-
-	.PARAMETER Password
-	Password string to connect to the UMN GitHub instance.
+	.PARAMETER psCreds
+		    PScredential composed of your username/password to Git Server
 
 	.PARAMETER authToken
-	Use instead of user/pass, personal auth token
+	    Use instead of user/pass, personal auth token
 
 	.PARAMETER Repo
-	Repository name string which is used to identify which repository under the organization to go into.
+	    Repository name string which is used to identify which repository under the organization to go into.
 
 	.PARAMETER Org
-	Organization name string which is used to identify which organization in the GitHub instance to go into.
+	    Organization name string which is used to identify which organization in the GitHub instance to go into.
 
 	.PARAMETER OutFolder
-	A string representing the local file path to download the GitHub Reop file to.
+	    A string representing the local file path to download the GitHub Reop file to.
 
 
 	.EXAMPLE
-	Get-GitHubRepoUnZipped -authToken $authToken -Repo $repo -Org $org -OutFolder $pathToFolder.
+	    Get-GitHubRepoUnZipped -authToken $authToken -Repo $repo -Org $org -OutFolder $pathToFolder.
 #>
 
 	[CmdletBinding()]
 	param(
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
+		
+        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$Username,
-
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Password,
+		[System.Management.Automation.PSCredential]$psCreds,
 
 		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
 		[ValidateNotNullOrEmpty()]
@@ -302,7 +237,7 @@ function Get-GitHubRepoUnZipped {
     if (-not(Test-Path $outFolder)){$null = New-Item $outFolder -ItemType Directory -Force}
     # get zip
     if ($authToken){Get-GitHubRepoZip -authToken $authToken -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
-	else{Get-GitHubRepoZip -Username $Username -Password $Password -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -server $server}
+	else{Get-GitHubRepoZip -psCreds $psCreds -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -server $server}
     # unzip
     Expand-Archive -Path "$outFolder\$repo.zip" -DestinationPath $outFolder -Force
     # get the actual folder name, yeah this looks funky but OpenRead locks the file, this is need to get the folder name and still remove the zip file later
@@ -327,46 +262,38 @@ function Get-GitHubRepoZip {
 
 <#
 	.SYNOPSIS
-	Get a GitHub Repo.
+	    Get a GitHub Repo.
 
 	.DESCRIPTION
-	Takes in a username, password, repository, organization and a file to output to then downloads the file
-	from the repository.
+	    Takes in a username, password, repository, organization and a file to output to then downloads the file
+	    from the repository.
 
-	.PARAMETER Username
-	Username string to connect to the UMN GitHub instance.
-
-	.PARAMETER Password
-	Password string to connect to the UMN GitHub instance.
+	.PARAMETER psCreds
+		    PScredential composed of your username/password to Git Server
 
 	.PARAMETER authToken
-	Use instead of user/pass, personal auth token
+	    Use instead of user/pass, personal auth token
 
 	.PARAMETER Repo
-	Repository name string which is used to identify which repository under the organization to go into.
+	    Repository name string which is used to identify which repository under the organization to go into.
 
 	.PARAMETER Org
-	Organization name string which is used to identify which organization in the GitHub instance to go into.
+	    Organization name string which is used to identify which organization in the GitHub instance to go into.
 
 	.PARAMETER OutFile
-	A string representing the local file path to download the GitHub Zip file to.
+	    A string representing the local file path to download the GitHub Zip file to.
 
 
 	.EXAMPLE
-	Get-GitHubRepoZip -authToken $authToken -Repo $repo -Org $org -OutFile $outFile -server "ServerFQDN"
+	    Get-GitHubRepoZip -authToken $authToken -Repo $repo -Org $org -OutFile $outFile -server "ServerFQDN"
 
-	This command will connect to the UMN GitHub instance and download the psscript1 file from the MyFakeRepo repository
-	which is under the MyFakeOrg organization.  It will create the file at C:\Temp called psscript.ps1.
 #>
     [CmdletBinding()]
 	param(
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
+		
+        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
-		[string]$Username,
-
-		[Parameter(ParameterSetName='BasicAuth',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Password,
+		[System.Management.Automation.PSCredential]$psCreds,
 
 		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
 		[ValidateNotNullOrEmpty()]
@@ -393,8 +320,8 @@ function Get-GitHubRepoZip {
 
 	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
 	else{
-		$Credential = Get-BasicAuthCredentials -Username $Username -Password $Password	
-		$Headers = @{"Authorization" = "Basic $Credential"}
+		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
+		$Headers = @{"Authorization" = "Basic $auth"}
 	}
     
     if ($server -eq 'github.com'){$conn = "https://api.github.com"}
