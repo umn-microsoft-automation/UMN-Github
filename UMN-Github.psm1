@@ -58,12 +58,8 @@ function Get-GitHubRepoRefs {
 	[CmdletBinding()]
 	param(
 		
-        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[System.Management.Automation.PSCredential]$psCreds,
+        [System.Management.Automation.PSCredential]$psCreds,
 
-		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
-		[ValidateNotNullOrEmpty()]
 		[string]$authToken,
 
 		[Parameter(Mandatory=$true)]
@@ -79,7 +75,7 @@ function Get-GitHubRepoRefs {
 	)
 
 	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	else{
+	elseif($psCreds){
 		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
 		$Headers = @{"Authorization" = "Basic $auth"}
 	}
@@ -129,12 +125,8 @@ function Get-GitHubRepoFile {
 	[CmdletBinding()]
 	param(
 		
-        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[System.Management.Automation.PSCredential]$psCreds,
+        [System.Management.Automation.PSCredential]$psCreds,
 
-		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
-		[ValidateNotNullOrEmpty()]
 		[string]$authToken,
 
 		[Parameter(Mandatory=$true)]
@@ -158,7 +150,7 @@ function Get-GitHubRepoFile {
 	)
 
 	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	else{
+	elseif($psCreds){
 		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
 		$Headers = @{"Authorization" = "Basic $auth"}
 	}
@@ -206,12 +198,8 @@ function Get-GitHubRepoUnZipped {
 	[CmdletBinding()]
 	param(
 		
-        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[System.Management.Automation.PSCredential]$psCreds,
+        [System.Management.Automation.PSCredential]$psCreds,
 
-		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
-		[ValidateNotNullOrEmpty()]
 		[string]$authToken,
 
 		[Parameter(Mandatory=$true)]
@@ -237,7 +225,8 @@ function Get-GitHubRepoUnZipped {
     if (-not(Test-Path $outFolder)){$null = New-Item $outFolder -ItemType Directory -Force}
     # get zip
     if ($authToken){Get-GitHubRepoZip -authToken $authToken -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
-	else{Get-GitHubRepoZip -psCreds $psCreds -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -server $server}
+	elseif($psCreds){Get-GitHubRepoZip -psCreds $psCreds -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
+    else{Get-GitHubRepoZip -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
     # unzip
     Expand-Archive -Path "$outFolder\$repo.zip" -DestinationPath $outFolder -Force
     # get the actual folder name, yeah this looks funky but OpenRead locks the file, this is need to get the folder name and still remove the zip file later
@@ -262,17 +251,17 @@ function Get-GitHubRepoZip {
 
 <#
 	.SYNOPSIS
-	    Get a GitHub Repo.
+	    Get a GitHub Repo and download to zip file.
 
 	.DESCRIPTION
-	    Takes in a username, password, repository, organization and a file to output to then downloads the file
+	    Takes in a PSCredention or Auth Key if needed, repository, organization and a file to output to then downloads the file
 	    from the repository.
 
 	.PARAMETER psCreds
 		    PScredential composed of your username/password to Git Server
 
 	.PARAMETER authToken
-	    Use instead of user/pass, personal auth token
+	    Use instead of PScredential, personal auth token
 
 	.PARAMETER Repo
 	    Repository name string which is used to identify which repository under the organization to go into.
@@ -291,12 +280,8 @@ function Get-GitHubRepoZip {
     [CmdletBinding()]
 	param(
 		
-        [Parameter(ParameterSetName='PSCred',Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[System.Management.Automation.PSCredential]$psCreds,
+        [System.Management.Automation.PSCredential]$psCreds,
 
-		[Parameter(ParameterSetName='TokenAuth',Mandatory)]
-		[ValidateNotNullOrEmpty()]
 		[string]$authToken,
 
 		[Parameter(Mandatory=$true)]
@@ -319,7 +304,7 @@ function Get-GitHubRepoZip {
 	)
 
 	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	else{
+	elseif($psCreds){
 		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
 		$Headers = @{"Authorization" = "Basic $auth"}
 	}
