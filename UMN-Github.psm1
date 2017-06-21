@@ -22,6 +22,46 @@
 #
 ###########################
 
+#region New-GitHubHeader
+function New-GitHubHeader {
+	<#
+		.SYNOPSIS
+		    Create Header to be consumed by all other functions
+
+		.DESCRIPTION
+		    Create Header to be consumed by all other functions
+
+		.PARAMETER psCreds
+		    PScredential composed of your username/password to Git Server
+
+		.PARAMETER authToken
+		    Use instead of user/pass, personal auth token
+
+		.NOTES
+		    Author: Travis Sobeck
+		    LASTEDIT: 6/20/2017
+
+		.EXAMPLE
+
+	#>
+	[CmdletBinding()]
+	param(
+		
+        [Parameter(Mandatory,ParameterSetName='creds')]
+        [System.Management.Automation.PSCredential]$psCreds,
+
+        [Parameter(Mandatory,ParameterSetName='token')]
+		[string]$authToken
+	)
+
+	if ($authToken){return (@{"Authorization" = "token $authToken"})}
+	else{
+		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
+		return (@{"Authorization" = "Basic $auth"})
+	}
+}
+#endregion
+
 #region Get-GitHubCommit
 function Get-GitHubCommit {
 	<#
@@ -31,11 +71,8 @@ function Get-GitHubCommit {
 		.DESCRIPTION
 		    Get a specific commit for a specific repo
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER sha
 		    sha for the commit, use Get-GitHubRepoRef to get it
@@ -59,9 +96,7 @@ function Get-GitHubCommit {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -76,11 +111,6 @@ function Get-GitHubCommit {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
     if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/git/commits/$sha"
@@ -97,11 +127,8 @@ function Get-GitHubRepoContent {
 		.DESCRIPTION
 		    Get file content from a GitHub Repo.
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER File
 		    File to get content of
@@ -123,9 +150,7 @@ function Get-GitHubRepoContent {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
@@ -143,11 +168,6 @@ function Get-GitHubRepoContent {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
 	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/contents/$File"
@@ -165,11 +185,8 @@ function Get-GitHubRepoRef {
 		.DESCRIPTION
 		    Get a specific reference or all references for a specific repo, use -ref for a specific reference
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER ref
 		    Specific ref, run the command without it to get a list example would be.
@@ -197,9 +214,7 @@ function Get-GitHubRepoRef {
     [Alias("Get-GitHubRepoRefs")]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -213,12 +228,7 @@ function Get-GitHubRepoRef {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
     if (-not($ref)){$ref = 'refs'}
 	$URI = "$conn/repos/$org/$Repo/git/$ref"
@@ -237,11 +247,8 @@ function Get-GitHubRepoFile {
 		    Takes in a username, password, filename, repository, organization and a file to output to then downloads the file
 		    from the repository.
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER File
 		    Filename string which needs to be downloaded from the repository.
@@ -267,9 +274,7 @@ function Get-GitHubRepoFile {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
@@ -291,11 +296,6 @@ function Get-GitHubRepoFile {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
 	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/contents/$File"
@@ -305,6 +305,69 @@ function Get-GitHubRepoFile {
 	} else {
 		$null = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $Headers -OutFile $OutFile
 	}
+}
+#endregion
+
+#region Get-GitHubTree
+function Get-GitHubTree {
+	<#
+		.SYNOPSIS
+		    Get a specific reference or all references for a specific repo
+
+		.DESCRIPTION
+		    Get a specific reference or all references for a specific repo, use -ref for a specific reference
+
+		.PARAMETER headers
+            Get this from New-GitHubHeader
+
+		.PARAMETER Repo
+		    Repository name string which is used to identify which repository under the organization to go into.
+
+		.PARAMETER Org
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
+
+        .PARAMETER sha
+            Sha of tree, use (Get-GitHubCommit -authToken $ghAuthToken -Repo $Repo -Org $Org -server $server -sha $sha).tree.sha to get the sha you need
+
+		.NOTES
+		    Name: Get-GitHubRepoRefs
+		    Author: Travis Sobeck
+		    LASTEDIT: 4/26/2017
+
+		.EXAMPLE
+		    
+
+        .EXAMPLE
+		    
+
+	#>
+	[CmdletBinding()]
+	param(
+		
+        [System.Collections.Hashtable]$headers,
+
+		[Parameter(Mandatory)]
+		[string]$Repo,
+
+		[Parameter(Mandatory)]
+		[string]$Org,
+
+        [Parameter(Mandatory)]
+        [string]$sha,
+
+        [switch]$recurse,
+
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+		[string]$server = 'github.com'
+	)
+
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+    else{$conn = "https://$server/api/v3"}
+    if (-not($ref)){$ref = 'refs'}
+	$URI = "$conn/repos/$org/$Repo/git/trees/$sha"
+    if ($recurse){$URI+= "?recursive=1"}
+	try{return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
+    catch{throw $Error[0]}
 }
 #endregion
 
@@ -318,11 +381,8 @@ function Get-GitHubRepoUnZipped {
 	    Takes in a username, password, repository, organization and a folder to output to then downloads the files
 	    from the repository.
 
-	.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-	.PARAMETER authToken
-	    Use instead of user/pass, personal auth token
+	.PARAMETER headers
+            Get this from New-GitHubHeader
 
 	.PARAMETER Repo
 	    Repository name string which is used to identify which repository under the organization to go into.
@@ -341,9 +401,7 @@ function Get-GitHubRepoUnZipped {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
@@ -367,9 +425,7 @@ function Get-GitHubRepoUnZipped {
 	# validate folder exits #
     if (-not(Test-Path $outFolder)){$null = New-Item $outFolder -ItemType Directory -Force}
     # get zip
-    if ($authToken){Get-GitHubRepoZip -authToken $authToken -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
-	elseif($psCreds){Get-GitHubRepoZip -psCreds $psCreds -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
-    else{Get-GitHubRepoZip -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server}
+    Get-GitHubRepoZip -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server -headers $headers
     # unzip
     Expand-Archive -Path "$outFolder\$repo.zip" -DestinationPath $outFolder -Force
     # get the actual folder name, yeah this looks funky but OpenRead locks the file, this is need to get the folder name and still remove the zip file later
@@ -391,8 +447,6 @@ function Get-GitHubRepoUnZipped {
 
 #region Get-GitHubRepoZip
 function Get-GitHubRepoZip {
-	# https://developer.github.com/v3/repos/contents/#get-archive-link
-
 <#
 	.SYNOPSIS
 	    Get a GitHub Repo and download to zip file.
@@ -401,11 +455,8 @@ function Get-GitHubRepoZip {
 	    Takes in a PSCredention or Auth Key if needed, repository, organization and a file to output to then downloads the file
 	    from the repository.
 
-	.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-	.PARAMETER authToken
-	    Use instead of PScredential, personal auth token
+	.PARAMETER headers
+            Get this from New-GitHubHeader
 
 	.PARAMETER Repo
 	    Repository name string which is used to identify which repository under the organization to go into.
@@ -423,10 +474,8 @@ function Get-GitHubRepoZip {
 #>
     [CmdletBinding()]
 	param(
-		
-        [System.Management.Automation.PSCredential]$psCreds,
 
-		[string]$authToken,
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
@@ -447,13 +496,7 @@ function Get-GitHubRepoZip {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
-    
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$Org/$repo/zipball/$ref"
 
@@ -470,11 +513,8 @@ function New-GitHubBlob {
 		.DESCRIPTION
 		    Create a new Blob
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER Repo
 		    Repository name string which is used to identify which repository under the organization to go into.
@@ -496,9 +536,8 @@ function New-GitHubBlob {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -513,12 +552,7 @@ function New-GitHubBlob {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/git/blobs"
     $content = $base64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path $filePath -Raw)))
@@ -536,11 +570,8 @@ function New-GitHubCommit {
 		.DESCRIPTION
 		    Create a new commit for a specific repo
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER Repo
 		    Repository name string which is used to identify which repository under the organization to go into.
@@ -568,9 +599,8 @@ function New-GitHubCommit {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -591,12 +621,7 @@ function New-GitHubCommit {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/git/commits"
     $content = Get-Content $filePath
@@ -614,11 +639,8 @@ function New-GitHubTree {
 		.DESCRIPTION
 		    Get a specific commit for a specific repo,
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER Repo
 		    Repository name string which is used to identify which repository under the organization to go into.
@@ -651,9 +673,8 @@ function New-GitHubTree {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -680,12 +701,7 @@ function New-GitHubTree {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/git/trees"
     $json = @{"base_tree" = $baseTree;"tree" = @(@{"path" = $path;"mode"=$mode;"type" = $type;"sha" = $blobSha})} | ConvertTo-Json -Depth 3
@@ -702,11 +718,8 @@ function Set-GitHubCommit {
 		.DESCRIPTION
 		    Update a reference to a new Commit
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER Repo
 		    Repository name string which is used to identify which repository under the organization to go into.
@@ -734,9 +747,8 @@ function Set-GitHubCommit {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -754,12 +766,7 @@ function Set-GitHubCommit {
 		[string]$server = 'github.com'
 	)
 
-	if ($authToken){$Headers = @{"Authorization" = "token $authToken"}}
-	elseif($psCreds){
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		$Headers = @{"Authorization" = "Basic $auth"}
-	}
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
     else{$conn = "https://$server/api/v3"}
 	$URI = "$conn/repos/$org/$Repo/git/$ref"
     $json = @{"sha" = $sha;"force"=$true} | ConvertTo-Json -Depth 3
@@ -776,11 +783,8 @@ function Update-GitHubRepo {
 		.DESCRIPTION
 		    Get a specific reference or all references for a specific repo, use -ref for a specific reference
 
-		.PARAMETER psCreds
-		    PScredential composed of your username/password to Git Server
-
-		.PARAMETER authToken
-		    Use instead of user/pass, personal auth token
+		.PARAMETER headers
+            Get this from New-GitHubHeader
 
 		.PARAMETER ref
 		    Specific ref, run the command without it to get a list example would be.
@@ -811,9 +815,8 @@ function Update-GitHubRepo {
 	[CmdletBinding()]
 	param(
 		
-        [System.Management.Automation.PSCredential]$psCreds,
-
-		[string]$authToken,
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$headers,
 
 		[Parameter(Mandatory)]
 		[string]$Repo,
@@ -839,19 +842,19 @@ function Update-GitHubRepo {
 
     try{
         # Get ref to head of master and record Sha
-        $reference = Get-GitHubRepoRef -authToken $authToken -Repo $Repo -Org $Org -server $server -ref $ref
+        $reference = Get-GitHubRepoRef -headers $headers -Repo $Repo -Org $Org -server $server -ref $ref
         $sha = $reference.object.sha
         # get commit for that ref and store Sha and URL of Tree
-        $commit = Get-GitHubCommit -authToken $authToken -Repo $Repo -Org $Org -server $server -sha $sha
+        $commit = Get-GitHubCommit -headers $headers -Repo $Repo -Org $Org -server $server -sha $sha
         $treeSha = $commit.tree.sha
         # Creat Blob
-        $blob = New-GitHubBlob -authToken $authToken -Repo $Repo -Org $Org -server $server -filePath $filePath
+        $blob = New-GitHubBlob -headers $headers -Repo $Repo -Org $Org -server $server -filePath $filePath
         # create new Tree
-        $tree = New-GitHubTree -authToken $authToken -Repo $Repo -Org $Org -server $server -path $path -blobSha $blob.sha -baseTree $treeSha -mode 100644 -type 'blob'
-        # create new comming
-        $newCommit = New-GitHubCommit -authToken $authToken -Repo $Repo -Org $Org -server $server -message $message -tree $tree.sha -parents @($sha)
+        $tree = New-GitHubTree -headers $headers -Repo $Repo -Org $Org -server $server -path $path -blobSha $blob.sha -baseTree $treeSha -mode 100644 -type 'blob'
+        # create new commit
+        $newCommit = New-GitHubCommit -headers $headers -Repo $Repo -Org $Org -server $server -message $message -tree $tree.sha -parents @($sha)
         # update head to point at new commint
-        Set-GitHubCommit -authToken $authToken -Repo $Repo -Org $Org -server $server -ref $ref -sha $newCommit.sha
+        Set-GitHubCommit -headers $headers -Repo $Repo -Org $Org -server $server -ref $ref -sha $newCommit.sha
     }
     catch{$Error[0]}
 }
