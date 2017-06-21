@@ -222,7 +222,7 @@ function Get-GitHubRepoRef {
     else{$conn = "https://$server/api/v3"}
     if (-not($ref)){$ref = 'refs'}
 	$URI = "$conn/repos/$org/$Repo/git/$ref"
-	Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
+	return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)
 }
 #endregion
 
@@ -840,7 +840,6 @@ function Update-GitHubRepo {
         # Get ref to head of master and record Sha
         $reference = Get-GitHubRepoRef -authToken $authToken -Repo $Repo -Org $Org -server $server -ref $ref
         $sha = $reference.object.sha
-        #break
         # get commit for that ref and store Sha and URL of Tree
         $commit = Get-GitHubCommit -authToken $authToken -Repo $Repo -Org $Org -server $server -sha $sha
         $treeSha = $commit.tree.sha
