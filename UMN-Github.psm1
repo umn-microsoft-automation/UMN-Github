@@ -878,7 +878,7 @@ function Update-GitHubRepo {
 	)
 
     try{
-        # Get reference to head of ref and record Sha
+        # Get reference to head of ref provided and record Sha
         $reference = Get-GitHubRepoRef -headers $headers -Repo $Repo -Org $Org -server $server -ref $ref
         $sha = $reference.object.sha
         # get commit for that ref and store Sha
