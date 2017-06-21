@@ -222,7 +222,8 @@ function Get-GitHubRepoRef {
     else{$conn = "https://$server/api/v3"}
     if (-not($ref)){$ref = 'refs'}
 	$URI = "$conn/repos/$org/$Repo/git/$ref"
-	return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)
+	try{return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
+    catch{throw $Error[0]}
 }
 #endregion
 
