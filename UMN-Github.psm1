@@ -62,6 +62,62 @@ function New-GitHubHeader {
 }
 #endregion
 
+#region Get-GitHubBase
+function Get-GitHubBase {
+	<#
+		.SYNOPSIS
+		    Base for constructing Get commands
+
+		.DESCRIPTION
+		    Base for constructing Get commands
+
+		.PARAMETER headers
+            Get this from New-GitHubHeader
+
+		.PARAMETER sha
+		    sha for the commit, use Get-GitHubRepoRef to get it
+
+		.PARAMETER Repo
+		    Repository name string which is used to identify which repository under the organization to go into.
+
+		.PARAMETER Org
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
+
+
+		.NOTES
+		    Author: Travis Sobeck
+		    LASTEDIT: 6/20/2017
+
+		.EXAMPLE
+		    Get-GitHubCommit -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer" -sha $sha
+
+	#>
+	[CmdletBinding()]
+	param(
+		
+        [System.Collections.Hashtable]$headers,
+
+		[Parameter(Mandatory)]
+		[string]$Repo,
+
+		[Parameter(Mandatory)]
+		[string]$Org,
+
+		[Parameter(Mandatory)]
+        [string]$data,
+
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+		[string]$server = 'github.com'
+	)
+
+    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+    else{$conn = "https://$server/api/v3"}
+	$URI = "$conn/repos/$org/$Repo/git/$data"
+	try{return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
+    catch{throw $Error[0]}
+}
+#endregion
+
 #region Get-GitHubCommit
 function Get-GitHubCommit {
 	<#
@@ -110,11 +166,7 @@ function Get-GitHubCommit {
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
 		[string]$server = 'github.com'
 	)
-
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/git/commits/$sha"
-	Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
+	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "commits/$sha"
 }
 #endregion
 
@@ -168,11 +220,7 @@ function Get-GitHubRepoContent {
 		[string]$server = 'github.com'
 	)
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/contents/$File"
-	Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
-	
+	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "contents/$File"	
 }
 #endregion
 
@@ -228,12 +276,8 @@ function Get-GitHubRepoRef {
 		[string]$server = 'github.com'
 	)
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
     if (-not($ref)){$ref = 'refs'}
-	$URI = "$conn/repos/$org/$Repo/git/$ref"
-	try{return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
-    catch{throw $Error[0]}
+	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data $ref
 }
 #endregion
 
@@ -296,10 +340,7 @@ function Get-GitHubRepoFile {
 		[string]$server = 'github.com'
 	)
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/contents/$File"
-	$RESTRequest = Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
+	$RESTRequest = Get-GitHubRepoFile -headers $headers -Repo $Repo -Org $Org -server $server -File $file
 	if($RESTRequest.download_url -eq $null) {
 		throw [System.IO.IOException]
 	} else {
@@ -361,13 +402,9 @@ function Get-GitHubTree {
 		[string]$server = 'github.com'
 	)
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-    if (-not($ref)){$ref = 'refs'}
-	$URI = "$conn/repos/$org/$Repo/git/trees/$sha"
-    if ($recurse){$URI+= "?recursive=1"}
-	try{return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
-    catch{throw $Error[0]}
+	$data = "trees/$sha"
+    if ($recurse){$data += "?recursive=1"}
+	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data $data
 }
 #endregion
 
@@ -841,10 +878,10 @@ function Update-GitHubRepo {
 	)
 
     try{
-        # Get ref to head of master and record Sha
+        # Get reference to head of ref and record Sha
         $reference = Get-GitHubRepoRef -headers $headers -Repo $Repo -Org $Org -server $server -ref $ref
         $sha = $reference.object.sha
-        # get commit for that ref and store Sha and URL of Tree
+        # get commit for that ref and store Sha
         $commit = Get-GitHubCommit -headers $headers -Repo $Repo -Org $Org -server $server -sha $sha
         $treeSha = $commit.tree.sha
         # Creat Blob
