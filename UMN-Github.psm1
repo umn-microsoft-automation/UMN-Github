@@ -340,12 +340,16 @@ function Get-GitHubRepoFile {
 		[string]$server = 'github.com'
 	)
 
-	$RESTRequest = Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "contents/$File"
-	if($RESTRequest.download_url -eq $null) {
-		throw [System.IO.IOException]
-	} else {
-		$null = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $Headers -OutFile $OutFile
-	}
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+    else{$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$org/$Repo/contents/$File"
+    $RESTRequest = Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
+    if($RESTRequest.download_url -eq $null) {
+        throw [System.IO.IOException]
+    } 
+    else {
+        $WebRequest = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $Headers -OutFile $OutFile
+    }
 }
 #endregion
 
