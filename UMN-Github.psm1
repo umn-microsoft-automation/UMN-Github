@@ -340,7 +340,7 @@ function Get-GitHubRepoFile {
 		[string]$server = 'github.com'
 	)
 
-	$RESTRequest = Get-GitHubRepoFile -headers $headers -Repo $Repo -Org $Org -server $server -File $file
+	$RESTRequest = Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "contents/$File"
 	if($RESTRequest.download_url -eq $null) {
 		throw [System.IO.IOException]
 	} else {
