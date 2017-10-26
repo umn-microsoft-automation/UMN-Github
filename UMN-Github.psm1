@@ -421,29 +421,29 @@ function Get-GitHubTree {
 #region Get-GitHubRepoUnZipped
 function Get-GitHubRepoUnZipped {
     <#
-	.SYNOPSIS
-	    Get a GitHub Repo.
+		.SYNOPSIS
+			Get a GitHub Repo.
 
-	.DESCRIPTION
-	    Takes in a username, password, repository, organization and a folder to output to then downloads the files
-	    from the repository.
+		.DESCRIPTION
+			Takes in a username, password, repository, organization and a folder to output to then downloads the files
+			from the repository.
 
-	.PARAMETER headers
-            Get this from New-GitHubHeader
+		.PARAMETER headers
+				Get this from New-GitHubHeader
 
-	.PARAMETER Repo
-	    Repository name string which is used to identify which repository under the organization to go into.
+		.PARAMETER Repo
+			Repository name string which is used to identify which repository under the organization to go into.
 
-	.PARAMETER Org
-	    Organization name string which is used to identify which organization in the GitHub instance to go into.
+		.PARAMETER Org
+			Organization name string which is used to identify which organization in the GitHub instance to go into.
 
-	.PARAMETER OutFolder
-	    A string representing the local file path to download the GitHub Reop file to.
+		.PARAMETER OutFolder
+			A string representing the local file path to download the GitHub Reop file to.
 
 
-	.EXAMPLE
-	    Get-GitHubRepoUnZipped -authToken $authToken -Repo $repo -Org $org -OutFolder $pathToFolder.
-#>
+		.EXAMPLE
+			Get-GitHubRepoUnZipped -authToken $authToken -Repo $repo -Org $org -OutFolder $pathToFolder.
+	#>
 
     [CmdletBinding()]
     param(
@@ -495,30 +495,30 @@ function Get-GitHubRepoUnZipped {
 #region Get-GitHubRepoZip
 function Get-GitHubRepoZip {
     <#
-	.SYNOPSIS
-	    Get a GitHub Repo and download to zip file.
+		.SYNOPSIS
+			Get a GitHub Repo and download to zip file.
 
-	.DESCRIPTION
-	    Takes in a PSCredention or Auth Key if needed, repository, organization and a file to output to then downloads the file
-	    from the repository.
+		.DESCRIPTION
+			Takes in a PSCredention or Auth Key if needed, repository, organization and a file to output to then downloads the file
+			from the repository.
 
-	.PARAMETER headers
-            Get this from New-GitHubHeader
+		.PARAMETER headers
+				Get this from New-GitHubHeader
 
-	.PARAMETER Repo
-	    Repository name string which is used to identify which repository under the organization to go into.
+		.PARAMETER Repo
+			Repository name string which is used to identify which repository under the organization to go into.
 
-	.PARAMETER Org
-	    Organization name string which is used to identify which organization in the GitHub instance to go into.
+		.PARAMETER Org
+			Organization name string which is used to identify which organization in the GitHub instance to go into.
 
-	.PARAMETER OutFile
-	    A string representing the local file path to download the GitHub Zip file to.
+		.PARAMETER OutFile
+			A string representing the local file path to download the GitHub Zip file to.
 
 
-	.EXAMPLE
-	    Get-GitHubRepoZip -authToken $authToken -Repo $repo -Org $org -OutFile $outFile -server "ServerFQDN"
+		.EXAMPLE
+			Get-GitHubRepoZip -authToken $authToken -Repo $repo -Org $org -OutFile $outFile -server "ServerFQDN"
 
-#>
+	#>
     [CmdletBinding()]
     param(
 
@@ -578,7 +578,6 @@ function New-GitHubBlob {
 
 		.EXAMPLE
 		   
-
 	#>
     [CmdletBinding()]
     param(
