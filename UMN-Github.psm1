@@ -24,7 +24,7 @@
 
 #region New-GitHubHeader
 function New-GitHubHeader {
-	<#
+    <#
 		.SYNOPSIS
 		    Create Header to be consumed by all other functions
 
@@ -44,27 +44,28 @@ function New-GitHubHeader {
 		.EXAMPLE
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
-        [Parameter(Mandatory,ParameterSetName='creds')]
+        [Parameter(Mandatory, ParameterSetName = 'creds')]
         [System.Management.Automation.PSCredential]$psCreds,
 
-        [Parameter(Mandatory,ParameterSetName='token')]
-		[string]$authToken
-	)
+        [Parameter(Mandatory, ParameterSetName = 'token')]
+        [string]$authToken
+    )
 
-	if ($authToken){return (@{"Authorization" = "token $authToken"})}
-	else{
-		$auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName+':'+$psCreds.GetNetworkCredential().Password))	
-		return (@{"Authorization" = "Basic $auth"})
-	}
+    if ($authToken) {return (@{"Authorization" = "token $authToken"})
+    }
+    else {
+        $auth = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($psCreds.UserName + ':' + $psCreds.GetNetworkCredential().Password))	
+        return (@{"Authorization" = "Basic $auth"})
+    }
 }
 #endregion
 
 #region Get-GitHubBase
 function Get-GitHubBase {
-	<#
+    <#
 		.SYNOPSIS
 		    Base for constructing Get commands
 
@@ -92,35 +93,35 @@ function Get-GitHubBase {
 		    Get-GitHubCommit -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer" -sha $sha
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [string]$data,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-    if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/git/$data"
-	try{return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
-    catch{throw $Error[0]}
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$org/$Repo/git/$data"
+    try {return(Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers)}
+    catch {throw $Error[0]}
 }
 #endregion
 
 #region Get-GitHubCommit
 function Get-GitHubCommit {
-	<#
+    <#
 		.SYNOPSIS
 		    Get a specific commit for a specific repo
 
@@ -149,30 +150,30 @@ function Get-GitHubCommit {
 		    Get-GitHubCommit -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer" -sha $sha
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [string]$sha,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
-	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "commits/$sha"
+        [string]$server = 'github.com'
+    )
+    Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "commits/$sha"
 }
 #endregion
 
 #region Get-GitHubRepoContent
 function Get-GitHubRepoContent {
-	<#
+    <#
 		.SYNOPSIS
 		    Get file content from a GitHub Repo.
 
@@ -199,34 +200,34 @@ function Get-GitHubRepoContent {
 		    Get-GitHubRepoContent -Username "Test" -Password "pass" -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "ServerFQDN"
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$File,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$File,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Repo,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Repo,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Org,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Org,
 
-		## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+        [string]$server = 'github.com'
+    )
 
-	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "contents/$File"	
+    Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "contents/$File"	
 }
 #endregion
 
 #region Get-GitHubRepoRef
 function Get-GitHubRepoRef {
-	<#
+    <#
 		.SYNOPSIS
 		    Get a specific reference or all references for a specific repo
 
@@ -258,32 +259,32 @@ function Get-GitHubRepoRef {
 		    Get-GitHubRepoRefs -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer" -ref 'refs/heads/master'
 
 	#>
-	[CmdletBinding()]
+    [CmdletBinding()]
     [Alias("Get-GitHubRepoRefs")]
-	param(
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
-		[string]$ref,
+        [string]$ref,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-    if (-not($ref)){$ref = 'refs'}
-	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data $ref
+    if (-not($ref)) {$ref = 'refs'}
+    Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data $ref
 }
 #endregion
 
 #region Get-GitHubRepoFile
 function Get-GitHubRepoFile {
-	<#
+    <#
 		.SYNOPSIS
 		    Get a file from a GitHub Repo.
 
@@ -295,7 +296,8 @@ function Get-GitHubRepoFile {
             Get this from New-GitHubHeader
 
 		.PARAMETER File
-		    Filename string which needs to be downloaded from the repository.
+			Filename string which needs to be downloaded from the repository.  This should be the path to the file if it's not
+			in the root of the repository for example "fizz/buzz.txt" and keep in mind it should be the forward slashes.
 
 		.PARAMETER Repo
 		    Repository name string which is used to identify which repository under the organization to go into.
@@ -304,7 +306,11 @@ function Get-GitHubRepoFile {
 		    Organization name string which is used to identify which organization in the GitHub instance to go into.
 
 		.PARAMETER OutFile
-		    A string representing the local file path to download the GitHub file to.
+			A string representing the local file path to download the GitHub file to.
+		
+		.PARAMETER Server
+			An optional parameter for the fully qualified domain name of a github server, defaults to github.com but can be an internal
+			enterprise server.
 
 		.NOTES
 		    Name: Get-GitHubRepoFile
@@ -312,39 +318,41 @@ function Get-GitHubRepoFile {
 		    LASTEDIT:  4/26/2017
 
 		.EXAMPLE
-		    Get-GitHubRepoFile -Username "Test" -Password "pass" -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -OutFile "C:\temp\psscript.ps1" -server "ServerFQDN"
+			$GitHubHeaders = New-GitHubHeader -psCreds (Get-Credential)
+
+			Get-GitHubRepoFile -headers $GitHubHeaders -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -OutFile "C:\temp\psscript.ps1" -server "github.foo.bar"
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$File,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$File,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Repo,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Repo,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Org,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Org,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$OutFile,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OutFile,
 
-		## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        ## The Default is public github but you can set this if you are running your own Enterprise Github server
+        [string]$server = 'github.com'
+    )
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
     $URI = "$conn/repos/$org/$Repo/contents/$File"
     $RESTRequest = Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
-    if($RESTRequest.download_url -eq $null) {
+    if ($RESTRequest.download_url -eq $null) {
         throw [System.IO.IOException]
     } 
     else {
@@ -353,9 +361,95 @@ function Get-GitHubRepoFile {
 }
 #endregion
 
+#region Get-GitHubRepoFileContent
+function Get-GitHubRepoFileContent {
+    <#
+		.SYNOPSIS
+		    Gets and then returns the contents of a GitHub repo file.
+
+		.DESCRIPTION
+			Takes in a username, password, filename, repository, organization and then returns the contents
+			of a file from the GitHub repository.
+
+		.PARAMETER headers
+            Get this from New-GitHubHeader
+
+		.PARAMETER File
+			Filename string which needs to be downloaded from the repository.  This should be the path to the file if it's not
+			in the root of the repository for example "fizz/buzz.txt" and keep in mind it should be the forward slashes.
+
+		.PARAMETER Repo
+		    Repository name string which is used to identify which repository under the organization to go into.
+
+		.PARAMETER Org
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
+		
+		.PARAMETER Server
+			An optional parameter for the fully qualified domain name of a github server, defaults to github.com but can be an internal
+			enterprise server.
+
+		.NOTES
+		    Name: Get-GitHubRepoFile
+		    Author: Jeff Bolduan
+		    LASTEDIT:  10/26/2017
+
+		.EXAMPLE
+			$GitHubHeaders = New-GitHubHeader -psCreds (Get-Credential)
+			
+		    Get-GitHubRepoFile -headers $GitHubHeaders -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "github.foo.bar"
+
+	#>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Collections.Hashtable]$headers,
+		
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$File,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Repo,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Org,
+
+        ## The Default is public github but you can set this if you are running your own Enterprise Github server\
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$server = 'github.com'
+    )
+	
+    if ($server -eq 'github.com') { $Connection = "https://api.github.com" }
+    else { $Connection = "https://$server/api/v3" }
+	
+    Write-Verbose -Message "[VariableValue:Connection] :: $Connection"
+	
+    $URI = "$Connection/repos/$org/$Repo/contents/$File"
+	
+    Write-Verbose -Message "[VariableValue:URI] :: $URI"
+	
+    $RESTRequest = Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
+	
+    Write-Verbose -Message "[VariableValue:RESTRequest] :: $RESTRequest"
+
+    if ($RESTRequest.download_url -eq $null) {
+        throw [System.IO.IOException]
+    }
+    else {
+        $WebRequest = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $headers
+		
+        return $WebRequest.Content
+    }
+}
+#endregion
+
 #region Get-GitHubTree
 function Get-GitHubTree {
-	<#
+    <#
 		.SYNOPSIS
 		    Get a specific reference or all references for a specific repo
 
@@ -386,16 +480,16 @@ function Get-GitHubTree {
 		    
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
         [Parameter(Mandatory)]
         [string]$sha,
@@ -403,68 +497,68 @@ function Get-GitHubTree {
         [switch]$recurse,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-	$data = "trees/$sha"
-    if ($recurse){$data += "?recursive=1"}
-	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data $data
+    $data = "trees/$sha"
+    if ($recurse) {$data += "?recursive=1"}
+    Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data $data
 }
 #endregion
 
 #region Get-GitHubRepoUnZipped
 function Get-GitHubRepoUnZipped {
-<#
-	.SYNOPSIS
-	    Get a GitHub Repo.
+    <#
+		.SYNOPSIS
+			Get a GitHub Repo.
 
-	.DESCRIPTION
-	    Takes in a username, password, repository, organization and a folder to output to then downloads the files
-	    from the repository.
+		.DESCRIPTION
+			Takes in a username, password, repository, organization and a folder to output to then downloads the files
+			from the repository.
 
-	.PARAMETER headers
-            Get this from New-GitHubHeader
+		.PARAMETER headers
+				Get this from New-GitHubHeader
 
-	.PARAMETER Repo
-	    Repository name string which is used to identify which repository under the organization to go into.
+		.PARAMETER Repo
+			Repository name string which is used to identify which repository under the organization to go into.
 
-	.PARAMETER Org
-	    Organization name string which is used to identify which organization in the GitHub instance to go into.
+		.PARAMETER Org
+			Organization name string which is used to identify which organization in the GitHub instance to go into.
 
-	.PARAMETER OutFolder
-	    A string representing the local file path to download the GitHub Reop file to.
+		.PARAMETER OutFolder
+			A string representing the local file path to download the GitHub Reop file to.
 
 
-	.EXAMPLE
-	    Get-GitHubRepoUnZipped -authToken $authToken -Repo $repo -Org $org -OutFolder $pathToFolder.
-#>
+		.EXAMPLE
+			Get-GitHubRepoUnZipped -authToken $authToken -Repo $repo -Org $org -OutFolder $pathToFolder.
+	#>
 
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Org,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Org,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$repo,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$repo,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$outFolder,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$outFolder,
 
-        [Parameter(Mandatory=$true)]
-		[string]$ref = "master",
+        [Parameter(Mandatory = $true)]
+        [string]$ref = "master",
 
-		## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+        [string]$server = 'github.com'
+    )
 
-	# validate folder exits #
-    if (-not(Test-Path $outFolder)){$null = New-Item $outFolder -ItemType Directory -Force}
+    # validate folder exits #
+    if (-not(Test-Path $outFolder)) {$null = New-Item $outFolder -ItemType Directory -Force}
     # get zip
     Get-GitHubRepoZip -Org $org -repo $repo -OutFile "$outFolder\$repo.zip" -ref $ref -server $server -headers $headers
     # unzip
@@ -477,7 +571,7 @@ function Get-GitHubRepoUnZipped {
         $folder
     }
     $job = Start-Job -Name 'temp' -ArgumentList "$outFolder\$repo.zip" -ScriptBlock $scriptblock
-    do{Start-Sleep -Seconds 1}until((Get-Job -Id $job.Id).State -eq 'Completed')
+    do {Start-Sleep -Seconds 1}until((Get-Job -Id $job.Id).State -eq 'Completed')
     $folder = Receive-Job -Job $job
     
     # rename the folder the the repo
@@ -488,58 +582,58 @@ function Get-GitHubRepoUnZipped {
 
 #region Get-GitHubRepoZip
 function Get-GitHubRepoZip {
-<#
-	.SYNOPSIS
-	    Get a GitHub Repo and download to zip file.
+    <#
+		.SYNOPSIS
+			Get a GitHub Repo and download to zip file.
 
-	.DESCRIPTION
-	    Takes in a PSCredention or Auth Key if needed, repository, organization and a file to output to then downloads the file
-	    from the repository.
+		.DESCRIPTION
+			Takes in a PSCredention or Auth Key if needed, repository, organization and a file to output to then downloads the file
+			from the repository.
 
-	.PARAMETER headers
-            Get this from New-GitHubHeader
+		.PARAMETER headers
+				Get this from New-GitHubHeader
 
-	.PARAMETER Repo
-	    Repository name string which is used to identify which repository under the organization to go into.
+		.PARAMETER Repo
+			Repository name string which is used to identify which repository under the organization to go into.
 
-	.PARAMETER Org
-	    Organization name string which is used to identify which organization in the GitHub instance to go into.
+		.PARAMETER Org
+			Organization name string which is used to identify which organization in the GitHub instance to go into.
 
-	.PARAMETER OutFile
-	    A string representing the local file path to download the GitHub Zip file to.
+		.PARAMETER OutFile
+			A string representing the local file path to download the GitHub Zip file to.
 
 
-	.EXAMPLE
-	    Get-GitHubRepoZip -authToken $authToken -Repo $repo -Org $org -OutFile $outFile -server "ServerFQDN"
+		.EXAMPLE
+			Get-GitHubRepoZip -authToken $authToken -Repo $repo -Org $org -OutFile $outFile -server "ServerFQDN"
 
-#>
+	#>
     [CmdletBinding()]
-	param(
+    param(
 
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Org,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Org,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$repo,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$repo,
 
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$OutFile,
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$OutFile,
 
-        [Parameter(Mandatory=$true)]
-		[string]$ref = "master",
+        [Parameter(Mandatory = $true)]
+        [string]$ref = "master",
 
-		## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+        [string]$server = 'github.com'
+    )
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$Org/$repo/zipball/$ref"
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$Org/$repo/zipball/$ref"
 
     Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers -OutFile $OutFile
 }
@@ -547,7 +641,7 @@ function Get-GitHubRepoZip {
 
 #region New-GitHubBlob
 function New-GitHubBlob {
-	<#
+    <#
 		.SYNOPSIS
 		    Create a new Blob
 
@@ -572,39 +666,38 @@ function New-GitHubBlob {
 
 		.EXAMPLE
 		   
-
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [Parameter(Mandatory)]
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
         [Parameter(Mandatory)]
         [string]$filePath,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/git/blobs"
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$org/$Repo/git/blobs"
     $content = $base64 = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path $filePath -Raw)))
-    $json = @{"content" = $content;"encoding" = "base64"} | ConvertTo-Json -Depth 3
-	Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
+    $json = @{"content" = $content; "encoding" = "base64"} | ConvertTo-Json -Depth 3
+    Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
 }
 #endregion
 
 #region New-GitHubCommit
 function New-GitHubCommit {
-	<#
+    <#
 		.SYNOPSIS
 		    Create a new commit for a specific repo
 
@@ -637,19 +730,19 @@ function New-GitHubCommit {
 		    
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [Parameter(Mandatory)]
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [string]$message,
 
         [Parameter(Mandatory)]
@@ -659,21 +752,21 @@ function New-GitHubCommit {
         [array]$parents,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/git/commits"
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$org/$Repo/git/commits"
     $content = Get-Content $filePath
     $json = @{"message" = $message; "parents" = $parents; "tree" = $tree} | ConvertTo-Json -Depth 3
-	Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
+    Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
 }
 #endregion
 
 #region New-GitHubTree
 function New-GitHubTree {
-	<#
+    <#
 		.SYNOPSIS
 		    Get a specific commit for a specific repo
 
@@ -711,19 +804,19 @@ function New-GitHubTree {
 		.EXAMPLE
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [Parameter(Mandatory)]
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [string]$baseTree,
 
         [Parameter(Mandatory)]
@@ -739,20 +832,20 @@ function New-GitHubTree {
         [string]$blobSha,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/git/trees"
-    $json = @{"base_tree" = $baseTree;"tree" = @(@{"path" = $path;"mode"=$mode;"type" = $type;"sha" = $blobSha})} | ConvertTo-Json -Depth 3
-	Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$org/$Repo/git/trees"
+    $json = @{"base_tree" = $baseTree; "tree" = @(@{"path" = $path; "mode" = $mode; "type" = $type; "sha" = $blobSha})} | ConvertTo-Json -Depth 3
+    Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
 }
 #endregion
 
 #region Set-GitHubCommit
 function Set-GitHubCommit {
-	<#
+    <#
 		.SYNOPSIS
 		    Update a reference to a new Commit
 
@@ -785,39 +878,39 @@ function Set-GitHubCommit {
 		    
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [Parameter(Mandatory)]
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [string]$ref,
 
         [Parameter(Mandatory)]
         [string]$sha,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-	$URI = "$conn/repos/$org/$Repo/git/$ref"
-    $json = @{"sha" = $sha;"force"=$true} | ConvertTo-Json -Depth 3
-	Invoke-RestMethod -Method Patch -Uri $URI -Headers $Headers -Body $json
+    if ($server -eq 'github.com') {$conn = "https://api.github.com"}
+    else {$conn = "https://$server/api/v3"}
+    $URI = "$conn/repos/$org/$Repo/git/$ref"
+    $json = @{"sha" = $sha; "force" = $true} | ConvertTo-Json -Depth 3
+    Invoke-RestMethod -Method Patch -Uri $URI -Headers $Headers -Body $json
 }
 #endregion
 
 #region Update-GitHubRepo
 function Update-GitHubRepo {
-	<#
+    <#
 		.SYNOPSIS
 		    Get a specific reference or all references for a specific repo
 
@@ -853,17 +946,17 @@ function Update-GitHubRepo {
 		    
 
 	#>
-	[CmdletBinding()]
-	param(
+    [CmdletBinding()]
+    param(
 		
         [Parameter(Mandatory)]
         [System.Collections.Hashtable]$headers,
 
-		[Parameter(Mandatory)]
-		[string]$Repo,
+        [Parameter(Mandatory)]
+        [string]$Repo,
 
-		[Parameter(Mandatory)]
-		[string]$Org,
+        [Parameter(Mandatory)]
+        [string]$Org,
 
         [Parameter(Mandatory)]		
         [string]$ref,
@@ -878,10 +971,10 @@ function Update-GitHubRepo {
         [string]$filePath,
 
         ## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
+        [string]$server = 'github.com'
+    )
 
-    try{
+    try {
         # Get reference to head of ref provided and record Sha
         $reference = Get-GitHubRepoRef -headers $headers -Repo $Repo -Org $Org -server $server -ref $ref
         $sha = $reference.object.sha
@@ -897,7 +990,7 @@ function Update-GitHubRepo {
         # update head to point at new commint
         Set-GitHubCommit -headers $headers -Repo $Repo -Org $Org -server $server -ref $ref -sha $newCommit.sha
     }
-    catch{$Error[0]}
+    catch {$Error[0]}
 }
 #endregion
 
