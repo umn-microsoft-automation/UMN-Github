@@ -170,60 +170,6 @@ function Get-GitHubCommit {
 }
 #endregion
 
-#region Get-GitHubRepoContent
-function Get-GitHubRepoContent {
-	<#
-		.SYNOPSIS
-		    Get file content from a GitHub Repo.
-
-		.DESCRIPTION
-		    Get file content from a GitHub Repo.
-
-		.PARAMETER headers
-            Get this from New-GitHubHeader
-
-		.PARAMETER File
-		    File to get content of
-
-		.PARAMETER Repo
-		    Repository name string which is used to identify which repository under the organization to go into.
-
-		.PARAMETER Org
-		    Organization name string which is used to identify which organization in the GitHub instance to go into.
-
-		.NOTES
-		    Author: Travis Sobeck
-		    LASTEDIT:  4/26/2017
-
-		.EXAMPLE
-		    Get-GitHubRepoContent -Username "Test" -Password "pass" -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "ServerFQDN"
-
-	#>
-	[CmdletBinding()]
-	param(
-		
-        [System.Collections.Hashtable]$headers,
-
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$File,
-
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Repo,
-
-		[Parameter(Mandatory=$true)]
-		[ValidateNotNullOrEmpty()]
-		[string]$Org,
-
-		## The Default is public github but you can se this if you are running your own Enterprise Github server
-		[string]$server = 'github.com'
-	)
-
-	Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "contents/$File"	
-}
-#endregion
-
 #region Get-GitHubRepoRef
 function Get-GitHubRepoRef {
 	<#
@@ -349,6 +295,92 @@ function Get-GitHubRepoFile {
     } 
     else {
         $WebRequest = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $Headers -OutFile $OutFile
+    }
+}
+#endregion
+
+#region Get-GitHubRepoFileContent
+function Get-GitHubRepoFileContent {
+    <#
+		.SYNOPSIS
+		    Gets and then returns the contents of a GitHub repo file.
+
+		.DESCRIPTION
+			Takes in a username, password, filename, repository, organization and then returns the contents
+			of a file from the GitHub repository.
+
+		.PARAMETER headers
+            Get this from New-GitHubHeader
+
+		.PARAMETER File
+			Filename string which needs to be downloaded from the repository.  This should be the path to the file if it's not
+			in the root of the repository for example "fizz/buzz.txt" and keep in mind it should be the forward slashes.
+
+		.PARAMETER Repo
+		    Repository name string which is used to identify which repository under the organization to go into.
+
+		.PARAMETER Org
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
+		
+		.PARAMETER Server
+			An optional parameter for the fully qualified domain name of a github server, defaults to github.com but can be an internal
+			enterprise server.
+
+		.NOTES
+		    Name: Get-GitHubRepoFile
+		    Author: Jeff Bolduan
+		    LASTEDIT:  10/26/2017
+
+		.EXAMPLE
+			$GitHubHeaders = New-GitHubHeader -psCreds (Get-Credential)
+			
+		    Get-GitHubRepoFile -headers $GitHubHeaders -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "github.foo.bar"
+
+	#>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Collections.Hashtable]$headers,
+		
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$File,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Repo,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Org,
+
+        ## The Default is public github but you can set this if you are running your own Enterprise Github server\
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$server = 'github.com'
+    )
+	
+    if ($server -eq 'github.com') { $Connection = "https://api.github.com" }
+    else { $Connection = "https://$server/api/v3" }
+	
+    Write-Verbose -Message "[VariableValue:Connection] :: $Connection"
+	
+    $URI = "$Connection/repos/$org/$Repo/contents/$File"
+	
+    Write-Verbose -Message "[VariableValue:URI] :: $URI"
+	
+    $RESTRequest = Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
+	
+    Write-Verbose -Message "[VariableValue:RESTRequest] :: $RESTRequest"
+
+    if ($RESTRequest.download_url -eq $null) {
+        throw [System.IO.IOException]
+    }
+    else {
+        $WebRequest = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $headers
+		
+        return $WebRequest.Content
     }
 }
 #endregion
