@@ -338,6 +338,7 @@ function Get-GitHubRepoFileContent {
 
 	#>
     [CmdletBinding()]
+    [Alias("Get-GitHubRepoContent")]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
@@ -374,14 +375,7 @@ function Get-GitHubRepoFileContent {
 	
     Write-Verbose -Message "[VariableValue:RESTRequest] :: $RESTRequest"
 
-    if ($RESTRequest.download_url -eq $null) {
-        throw [System.IO.IOException]
-    }
-    else {
-        $WebRequest = Invoke-WebRequest -Uri $RESTRequest.download_url -Headers $headers
-		
-        return $WebRequest.Content
-    }
+    return([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($RESTRequest.content)))
 }
 #endregion
 
