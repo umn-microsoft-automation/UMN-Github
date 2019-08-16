@@ -379,6 +379,59 @@ function Get-GitHubRepoFileContent {
 }
 #endregion
 
+#region Get-GitHubRepoTag
+function Get-GitHubRepoTag {
+	<#
+		.SYNOPSIS
+		    Get a specific commit for a specific repo
+
+		.DESCRIPTION
+		    Get a specific commit for a specific repo
+
+		.PARAMETER headers
+            Get this from New-GitHubHeader
+
+		.PARAMETER sha
+		    sha for the commit, use Get-GitHubRepoRef to get it
+
+		.PARAMETER Repo
+		    Repository name string which is used to identify which repository under the organization to go into.
+
+		.PARAMETER Org
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
+
+
+		.NOTES
+		    Name: Get-GitHubCommit
+		    Author: Travis Sobeck
+			LASTEDIT: 6/20/2017
+			Ref: https://developer.github.com/v3/git/tags/
+
+		.EXAMPLE
+		    Get-GitHubCommit -Username "Test" -Password "pass" -Repo "MyFakeReop" -Org "MyFakeOrg" -server "onPremiseServer" -sha $sha
+
+	#>
+	[CmdletBinding()]
+	param(
+		
+        [System.Collections.Hashtable]$headers,
+
+		[Parameter(Mandatory)]
+		[string]$Repo,
+
+		[Parameter(Mandatory)]
+		[string]$Org,
+
+        [string]$sha,
+
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+		[string]$server = 'github.com'
+	) 
+	if ($sha){Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "tags/$sha"}
+	else{Get-GitHubBase -headers $headers -Repo $Repo -Org $Org -server $server -data "refs/tags"}
+}
+#endregion
+
 #region Get-GitHubTree
 function Get-GitHubTree {
 	<#
@@ -696,6 +749,82 @@ function New-GitHubCommit {
 }
 #endregion
 
+#region New-GitHubTag
+function New-GitHubTag {
+	<#
+		.SYNOPSIS
+		    Get a specific commit for a specific repo
+
+		.DESCRIPTION
+		    Get a specific commit for a specific repo,
+
+		.PARAMETER headers
+            Get this from New-GitHubHeader
+
+		.PARAMETER Repo
+		    Repository name string which is used to identify which repository under the organization to go into.
+
+		.PARAMETER Org
+		    Organization name string which is used to identify which organization in the GitHub instance to go into.
+
+        .PARAMETER path
+            path to file in github
+        
+        .PARAMETER baseTree
+            This is the SHA for the tree this is getting added onto, use Get-GitHubCommit and store  ie $treeSha = $commit.tree.sha
+            
+        .PARAMETER mode
+            The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree), 160000 for submodule (commit), or 120000 for a blob that specifies the path of a symlink
+
+        .PARAMETER type
+            Either blob, tree, or commit
+
+        .PARAMETER blobSha
+            Sha from the blob containing the content, use New-GitHubBlob and record the return sha
+
+		.NOTES
+		    Author: Travis Sobeck
+		    LASTEDIT: 6/20/2017
+
+		.EXAMPLE
+
+	#>
+	[CmdletBinding()]
+	param(
+		
+        [Parameter(Mandatory)]
+        [System.Collections.Hashtable]$headers,
+
+		[Parameter(Mandatory)]
+		[string]$Repo,
+
+		[Parameter(Mandatory)]
+		[string]$Org,
+
+		[Parameter(Mandatory)]
+        [string]$sha,
+
+        [Parameter(Mandatory)]
+        [string]$type,
+
+        [Parameter(Mandatory)]
+        [string]$message,
+
+        [Parameter(Mandatory)]
+		[string]$tag,
+		
+        ## The Default is public github but you can se this if you are running your own Enterprise Github server
+		[string]$server = 'github.com'
+	)
+
+	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
+    else{$conn = "https://$server/api/v3"}
+	$URI = "$conn/repos/$org/$Repo/git/tags"
+    $json = @{tag=$tag;message=$message;object=$sha;type=$type} | ConvertTo-Json -Depth 3
+	Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
+}
+#endregion
+
 #region New-GitHubTree
 function New-GitHubTree {
 	<#
@@ -774,7 +903,7 @@ function New-GitHubTree {
 	Invoke-RestMethod -Method Post -Uri $URI -Headers $Headers -Body $json
 }
 #endregion
-
+IInvoke-WebRequest
 #region Set-GitHubCommit
 function Set-GitHubCommit {
 	<#
