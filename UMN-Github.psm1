@@ -258,7 +258,7 @@ function Get-GitHubRepoFile {
 		.NOTES
 		    Name: Get-GitHubRepoFile
 		    Author: Jeff Bolduan
-		    LASTEDIT:  4/26/2017
+		    LASTEDIT:  11/20/2019
 
 		.EXAMPLE
 		    Get-GitHubRepoFile -Username "Test" -Password "pass" -File "psscript.ps1" -Repo "MyFakeReop" -Org "MyFakeOrg" -OutFile "C:\temp\psscript.ps1" -server "ServerFQDN"
