@@ -244,13 +244,16 @@ function Get-GitHubRepoFile {
 		    Filename string which needs to be downloaded from the repository.
 
 		.PARAMETER Repo
-		    Repository name string which is used to identify which repository under the organization to go into.
+			Repository name string which is used to identify which repository under the organization to go into.
+		
+		.PARAMETER Branch
+		    Branch name string which is used to identify which branch under the repository to go into. Default is master.
 
 		.PARAMETER Org
 		    Organization name string which is used to identify which organization in the GitHub instance to go into.
 
 		.PARAMETER OutFile
-		    A string representing the local file path to download the GitHub file to.
+			A string representing the local file path to download the GitHub file to.
 
 		.NOTES
 		    Name: Get-GitHubRepoFile
@@ -274,6 +277,10 @@ function Get-GitHubRepoFile {
 		[ValidateNotNullOrEmpty()]
 		[string]$Repo,
 
+        [Parameter(Mandatory=$false)]
+		[ValidateNotNullOrEmpty()]
+		[string]$Branch,
+
 		[Parameter(Mandatory=$true)]
 		[ValidateNotNullOrEmpty()]
 		[string]$Org,
@@ -287,8 +294,9 @@ function Get-GitHubRepoFile {
 	)
 
 	if ($server -eq 'github.com'){$conn = "https://api.github.com"}
-    else{$conn = "https://$server/api/v3"}
-    $URI = "$conn/repos/$org/$Repo/contents/$File"
+	else{$conn = "https://$server/api/v3"}
+	if($Branch){$URI = "$conn/repos/$org/$Repo/contents/$File" + "?ref=$Branch"}
+	else{$URI = "$conn/repos/$org/$Repo/contents/$File"}
     $RESTRequest = Invoke-RestMethod -Method Get -Uri $URI -Headers $Headers
     if($RESTRequest.download_url -eq $null) {
         throw [System.IO.IOException]
@@ -318,6 +326,8 @@ function Get-GitHubRepoFileContent {
 
 		.PARAMETER Repo
 		    Repository name string which is used to identify which repository under the organization to go into.
+        .PARAMETER Branch
+		    Branch name string which is used to identify which branch under the repository to go into. Default is master.
 
 		.PARAMETER Org
 		    Organization name string which is used to identify which organization in the GitHub instance to go into.
@@ -329,7 +339,7 @@ function Get-GitHubRepoFileContent {
 		.NOTES
 		    Name: Get-GitHubRepoFile
 		    Author: Jeff Bolduan
-		    LASTEDIT:  10/26/2017
+		    LASTEDIT:  11/20/2019
 
 		.EXAMPLE
 			$GitHubHeaders = New-GitHubHeader -psCreds (Get-Credential)
@@ -352,6 +362,10 @@ function Get-GitHubRepoFileContent {
         [ValidateNotNullOrEmpty()]
         [string]$Repo,
 
+        [Parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Branch,
+
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$Org,
@@ -364,10 +378,16 @@ function Get-GitHubRepoFileContent {
 	
     if ($server -eq 'github.com') { $Connection = "https://api.github.com" }
     else { $Connection = "https://$server/api/v3" }
-	
+
     Write-Verbose -Message "[VariableValue:Connection] :: $Connection"
+
+    if($Branch){
+        $URI = "$Connection/repos/$org/$Repo/contents/$File" + "?ref=$Branch"
+    }
+    else {
+       $URI = "$Connection/repos/$org/$Repo/contents/$File" 
+    }
 	
-    $URI = "$Connection/repos/$org/$Repo/contents/$File"
 	
     Write-Verbose -Message "[VariableValue:URI] :: $URI"
 	
